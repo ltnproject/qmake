@@ -1,0 +1,534 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>QR Generator</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>▦</text></svg>">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@300;400;500&family=Syne:wght@400;500;600;700;800&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+  <style>
+    :root {
+      --bg: #f5f2eb;
+      --bg2: #ece9e1;
+      --ink: #1a1714;
+      --ink2: #4a4540;
+      --ink3: #8a837a;
+      --accent: #e8440a;
+      --green: #1a6b3c;
+      --border: #d8d3ca;
+      --white: #fdfcf8;
+      --shadow: rgba(26,23,20,0.08);
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+
+    body {
+      font-family: 'Syne', 'Segoe UI', sans-serif;
+      background: var(--bg);
+      color: var(--ink);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      opacity: 0.025;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+      background-size: 120px;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    /* ─── HEADER ─── */
+    header {
+      position: relative; z-index: 1;
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 22px 40px;
+      border-bottom: 1px solid var(--border);
+    }
+    .logo {
+      display: flex; align-items: center; gap: 12px;
+      font-weight: 800; font-size: 1.05rem; letter-spacing: -0.02em;
+    }
+    .logo-icon {
+      width: 34px; height: 34px; background: var(--ink); border-radius: 8px;
+      display: flex; align-items: center; justify-content: center;
+      color: var(--bg); font-size: 1rem;
+    }
+    .header-tag {
+      font-family: 'DM Mono', monospace;
+      font-size: 0.7rem; color: var(--ink3); letter-spacing: 0.05em;
+    }
+
+    /* ─── HERO ─── */
+    .hero {
+      position: relative; z-index: 1;
+      padding: 56px 40px 40px; max-width: 1100px; margin: 0 auto; width: 100%;
+    }
+    .hero-eyebrow {
+      display: inline-flex; align-items: center; gap: 8px;
+      font-family: 'DM Mono', monospace; font-size: 0.7rem;
+      color: var(--accent); letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 14px;
+    }
+    .hero-eyebrow::before { content:''; width:18px; height:2px; background:var(--accent); }
+    h1 {
+      font-size: clamp(2.6rem, 7vw, 5rem); font-weight: 800;
+      line-height: 0.95; letter-spacing: -0.03em; margin-bottom: 16px;
+    }
+    h1 em { font-style: normal; color: var(--accent); }
+    .hero-sub { font-size: 0.95rem; color: var(--ink3); font-weight: 400; max-width: 400px; line-height: 1.65; }
+
+    /* ─── MAIN GRID ─── */
+    main {
+      position: relative; z-index: 1; flex: 1;
+      max-width: 1100px; margin: 0 auto; padding: 0 40px 80px; width: 100%;
+      display: grid; grid-template-columns: 1.1fr 1fr; gap: 24px; align-items: start;
+    }
+    @media(max-width:720px) {
+      main { grid-template-columns: 1fr; padding: 0 20px 60px; }
+      header { padding: 18px 20px; }
+      .hero { padding: 36px 20px 28px; }
+    }
+
+    /* ─── CARD ─── */
+    .card {
+      background: var(--white); border: 1px solid var(--border);
+      border-radius: 20px; padding: 28px 28px;
+      box-shadow: 0 2px 10px var(--shadow); margin-bottom: 20px;
+    }
+    .card:last-child { margin-bottom: 0; }
+    .card-hd {
+      display: flex; align-items: center; justify-content: space-between;
+      margin-bottom: 24px; padding-bottom: 18px; border-bottom: 1px solid var(--border);
+    }
+    .card-title { font-size: 0.72rem; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: var(--ink2); }
+    .card-num { font-family: 'DM Mono', monospace; font-size: 0.68rem; color: var(--ink3); }
+
+    /* ─── FIELDS ─── */
+    .field { margin-bottom: 20px; }
+    .field:last-child { margin-bottom: 0; }
+    .fl { display: flex; align-items: center; justify-content: space-between; margin-bottom: 7px; }
+    .fl span { font-size: 0.7rem; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--ink2); }
+    .fh { font-family: 'DM Mono', monospace; font-size: 0.65rem; color: var(--ink3); }
+
+    textarea, select {
+      width: 100%; background: var(--bg); border: 1.5px solid var(--border);
+      border-radius: 11px; padding: 12px 14px; color: var(--ink);
+      font-family: 'DM Mono', monospace; font-size: 0.85rem; outline: none;
+      transition: border-color 0.2s, box-shadow 0.2s; resize: vertical;
+    }
+    textarea:focus, select:focus {
+      border-color: var(--accent); box-shadow: 0 0 0 3px rgba(232,68,10,0.07);
+    }
+    select option { background: var(--white); }
+
+    .type-tabs { display: flex; gap: 6px; flex-wrap: wrap; }
+    .type-tab {
+      padding: 6px 13px; border-radius: 8px; border: 1.5px solid var(--border);
+      background: transparent; font-family: 'Syne', sans-serif;
+      font-size: 0.76rem; font-weight: 600; color: var(--ink2); cursor: pointer; transition: all 0.17s;
+    }
+    .type-tab:hover { border-color: var(--ink); color: var(--ink); }
+    .type-tab.active { background: var(--ink); border-color: var(--ink); color: var(--bg); }
+
+    .color-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    .color-pick {
+      display: flex; align-items: center; gap: 10px;
+      background: var(--bg); border: 1.5px solid var(--border); border-radius: 10px;
+      padding: 10px 12px; cursor: pointer; transition: border-color 0.18s; position: relative;
+    }
+    .color-pick:hover { border-color: var(--accent); }
+    .swatch { width: 24px; height: 24px; border-radius: 6px; border: 1.5px solid rgba(0,0,0,0.1); flex-shrink: 0; }
+    .color-role { font-size: 0.6rem; text-transform: uppercase; letter-spacing: 0.1em; color: var(--ink3); display: block; }
+    .color-val { font-family: 'DM Mono', monospace; font-size: 0.78rem; color: var(--ink); font-weight: 500; }
+    input[type="color"] { position: absolute; opacity: 0; width: 0; height: 0; pointer-events: none; }
+
+    .palettes { display: flex; gap: 7px; flex-wrap: wrap; }
+    .palette {
+      display: flex; border-radius: 8px; overflow: hidden; cursor: pointer;
+      border: 2px solid transparent; transition: all 0.17s;
+    }
+    .palette:hover { transform: scale(1.08); border-color: var(--ink); }
+    .palette span { display: block; width: 20px; height: 20px; }
+
+    .slider-row { display: flex; align-items: center; gap: 12px; }
+    input[type="range"] {
+      flex: 1; -webkit-appearance: none; height: 3px; border-radius: 3px;
+      background: linear-gradient(to right, var(--ink) var(--pct,50%), var(--border) var(--pct,50%));
+      outline: none;
+    }
+    input[type="range"]::-webkit-slider-thumb {
+      -webkit-appearance: none; width: 15px; height: 15px; border-radius: 50%;
+      background: var(--ink); cursor: pointer; box-shadow: 0 2px 6px rgba(0,0,0,0.18);
+    }
+    .slider-val { font-family: 'DM Mono', monospace; font-size: 0.82rem; color: var(--ink); min-width: 46px; text-align: right; }
+
+    .ec-row { display: flex; gap: 7px; }
+    .ec-btn {
+      flex: 1; padding: 9px 5px; border-radius: 9px; border: 1.5px solid var(--border);
+      background: transparent; cursor: pointer; text-align: center; transition: all 0.17s; font-family: inherit;
+    }
+    .ec-lbl { display: block; font-weight: 700; font-size: 0.9rem; color: var(--ink); }
+    .ec-pct { display: block; font-family: 'DM Mono', monospace; font-size: 0.6rem; color: var(--ink3); margin-top: 2px; }
+    .ec-btn.active { background: var(--ink); border-color: var(--ink); }
+    .ec-btn.active .ec-lbl, .ec-btn.active .ec-pct { color: var(--bg); }
+
+    .gen-btn {
+      width: 100%; padding: 16px; background: var(--accent); border: none; border-radius: 13px;
+      font-family: 'Syne', sans-serif; font-size: 0.97rem; font-weight: 700; letter-spacing: 0.03em;
+      color: #fff; cursor: pointer; transition: transform 0.17s, box-shadow 0.17s, background 0.17s;
+      box-shadow: 0 5px 18px rgba(232,68,10,0.28); display: flex; align-items: center; justify-content: center; gap: 9px;
+    }
+    .gen-btn:hover { transform: translateY(-2px); box-shadow: 0 9px 24px rgba(232,68,10,0.36); background: #d03d09; }
+    .gen-btn:active { transform: translateY(0); }
+
+    /* ─── OUTPUT ─── */
+    .output-card {
+      background: var(--white); border: 1px solid var(--border); border-radius: 20px;
+      overflow: hidden; box-shadow: 0 2px 10px var(--shadow); position: sticky; top: 24px;
+    }
+    .output-top {
+      padding: 18px 22px; border-bottom: 1px solid var(--border);
+      display: flex; align-items: center; justify-content: space-between;
+    }
+    .live-dot {
+      width: 8px; height: 8px; border-radius: 50%; background: var(--border); transition: background 0.3s;
+    }
+    .live-dot.on { background: var(--green); box-shadow: 0 0 5px rgba(26,107,60,0.45); animation: blink 2s infinite; }
+    @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.5} }
+
+    .qr-stage {
+      padding: 32px; display: flex; align-items: center; justify-content: center;
+      min-height: 270px; background: var(--bg); border-bottom: 1px solid var(--border);
+    }
+    .qr-empty { display: flex; flex-direction: column; align-items: center; gap: 12px; color: var(--ink3); }
+    .qr-empty p { font-family: 'DM Mono', monospace; font-size: 0.76rem; letter-spacing: 0.05em; }
+    #qr-out { display: none; }
+    #qr-out canvas, #qr-out img { border-radius: 6px; display: block; box-shadow: 0 8px 28px rgba(0,0,0,0.1); }
+
+    .content-preview { padding: 14px 22px; border-bottom: 1px solid var(--border); display: none; }
+    .preview-lbl { font-family: 'DM Mono', monospace; font-size: 0.62rem; text-transform: uppercase; letter-spacing: 0.1em; color: var(--ink3); margin-bottom: 5px; }
+    .preview-txt { font-family: 'DM Mono', monospace; font-size: 0.78rem; color: var(--ink); word-break: break-all; line-height: 1.5; }
+
+    .stats-row { display: grid; grid-template-columns: repeat(3,1fr); border-bottom: 1px solid var(--border); }
+    .stat { padding: 13px 14px; text-align: center; border-right: 1px solid var(--border); }
+    .stat:last-child { border-right: none; }
+    .stat-n { font-family: 'DM Mono', monospace; font-size: 0.95rem; font-weight: 500; color: var(--ink); }
+    .stat-l { font-size: 0.6rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--ink3); margin-top: 2px; }
+
+    .actions { display: grid; grid-template-columns: 1fr 1fr; }
+    .act-btn {
+      padding: 15px 10px; border: none; background: transparent; border-right: 1px solid var(--border);
+      font-family: 'Syne', sans-serif; font-size: 0.8rem; font-weight: 700; letter-spacing: 0.03em;
+      color: var(--ink2); cursor: pointer; transition: all 0.17s;
+      display: flex; align-items: center; justify-content: center; gap: 7px;
+    }
+    .act-btn:last-child { border-right: none; }
+    .act-btn:hover:not(:disabled) { background: var(--bg); color: var(--ink); }
+    .act-btn:disabled { opacity: 0.3; cursor: default; }
+    .act-btn.primary { color: var(--accent); }
+    .act-btn.primary:hover:not(:disabled) { background: rgba(232,68,10,0.05); }
+
+    .toast {
+      position: fixed; bottom: 26px; left: 50%;
+      transform: translateX(-50%) translateY(60px);
+      background: var(--ink); color: var(--bg); padding: 11px 20px; border-radius: 40px;
+      font-size: 0.8rem; font-weight: 600; letter-spacing: 0.04em; z-index: 100;
+      opacity: 0; transition: transform 0.26s ease, opacity 0.26s ease; white-space: nowrap;
+    }
+    .toast.show { transform: translateX(-50%) translateY(0); opacity: 1; }
+
+    footer {
+      position: relative; z-index: 1; padding: 18px 40px;
+      border-top: 1px solid var(--border);
+      display: flex; align-items: center; justify-content: space-between;
+      font-family: 'DM Mono', monospace; font-size: 0.68rem; color: var(--ink3);
+    }
+    @media(max-width:720px) { footer { padding: 14px 20px; flex-direction: column; gap: 4px; text-align: center; } }
+  </style>
+</head>
+<body>
+
+<header>
+  <div class="logo"><div class="logo-icon">▦</div>QR Generator</div>
+  <span class="header-tag">v1.0 · free &amp; private</span>
+</header>
+
+<div class="hero">
+  <div class="hero-eyebrow">Instant QR Codes</div>
+  <h1>Scan. <em>Connect.</em> Share.</h1>
+  <p class="hero-sub">Generate QR codes for URLs, text, Wi-Fi, email, and phone. Runs entirely in your browser — nothing sent to any server.</p>
+</div>
+
+<main>
+
+  <!-- LEFT COLUMN -->
+  <div>
+    <div class="card">
+      <div class="card-hd"><span class="card-title">Content</span><span class="card-num">01</span></div>
+
+      <div class="field">
+        <div class="fl"><span>Type</span></div>
+        <div class="type-tabs">
+          <button class="type-tab active" onclick="setType('url',this)">🔗 URL</button>
+          <button class="type-tab" onclick="setType('text',this)">📝 Text</button>
+          <button class="type-tab" onclick="setType('wifi',this)">📶 Wi-Fi</button>
+          <button class="type-tab" onclick="setType('email',this)">✉️ Email</button>
+          <button class="type-tab" onclick="setType('phone',this)">📞 Phone</button>
+        </div>
+      </div>
+
+      <div id="input-area">
+        <div class="field">
+          <div class="fl"><span>URL</span><span class="fh">include https://</span></div>
+          <textarea id="main-input" rows="2" placeholder="https://example.com"></textarea>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-hd"><span class="card-title">Style</span><span class="card-num">02</span></div>
+
+      <div class="field">
+        <div class="fl"><span>Colors</span></div>
+        <div class="color-grid">
+          <div class="color-pick" onclick="document.getElementById('pk-dark').click()">
+            <div class="swatch" id="sw-dark" style="background:#1a1714"></div>
+            <div><span class="color-role">Foreground</span><span class="color-val" id="cv-dark">#1a1714</span></div>
+            <input type="color" id="pk-dark" value="#1a1714" oninput="setColor('dark',this.value)">
+          </div>
+          <div class="color-pick" onclick="document.getElementById('pk-light').click()">
+            <div class="swatch" id="sw-light" style="background:#fdfcf8"></div>
+            <div><span class="color-role">Background</span><span class="color-val" id="cv-light">#fdfcf8</span></div>
+            <input type="color" id="pk-light" value="#fdfcf8" oninput="setColor('light',this.value)">
+          </div>
+        </div>
+      </div>
+
+      <div class="field">
+        <div class="fl"><span>Palettes</span></div>
+        <div class="palettes">
+          <div class="palette" title="Classic" onclick="pal('#1a1714','#fdfcf8')"><span style="background:#1a1714"></span><span style="background:#fdfcf8"></span></div>
+          <div class="palette" title="Brick" onclick="pal('#e8440a','#fdf6ec')"><span style="background:#e8440a"></span><span style="background:#fdf6ec"></span></div>
+          <div class="palette" title="Forest" onclick="pal('#1a6b3c','#f0faf4')"><span style="background:#1a6b3c"></span><span style="background:#f0faf4"></span></div>
+          <div class="palette" title="Ocean" onclick="pal('#0057b8','#eef5ff')"><span style="background:#0057b8"></span><span style="background:#eef5ff"></span></div>
+          <div class="palette" title="Midnight" onclick="pal('#f5f2eb','#0d0d0d')"><span style="background:#f5f2eb"></span><span style="background:#0d0d0d"></span></div>
+          <div class="palette" title="Amber" onclick="pal('#78350f','#fef3c7')"><span style="background:#78350f"></span><span style="background:#fef3c7"></span></div>
+          <div class="palette" title="Rose" onclick="pal('#9f1239','#fff1f2')"><span style="background:#9f1239"></span><span style="background:#fff1f2"></span></div>
+          <div class="palette" title="Slate" onclick="pal('#334155','#f8fafc')"><span style="background:#334155"></span><span style="background:#f8fafc"></span></div>
+        </div>
+      </div>
+
+      <div class="field">
+        <div class="fl"><span>Size</span><span class="fh" id="size-hint">256 × 256 px</span></div>
+        <div class="slider-row">
+          <input type="range" id="size-sl" min="128" max="512" value="256" step="32" oninput="onSize(this)">
+          <span class="slider-val" id="size-val">256</span>
+        </div>
+      </div>
+
+      <div class="field">
+        <div class="fl"><span>Error Correction</span><span class="fh">higher = more resilient</span></div>
+        <div class="ec-row">
+          <button class="ec-btn" onclick="setEC('L',this)"><span class="ec-lbl">L</span><span class="ec-pct">7%</span></button>
+          <button class="ec-btn active" onclick="setEC('M',this)"><span class="ec-lbl">M</span><span class="ec-pct">15%</span></button>
+          <button class="ec-btn" onclick="setEC('Q',this)"><span class="ec-lbl">Q</span><span class="ec-pct">25%</span></button>
+          <button class="ec-btn" onclick="setEC('H',this)"><span class="ec-lbl">H</span><span class="ec-pct">30%</span></button>
+        </div>
+      </div>
+
+      <button class="gen-btn" onclick="generate()">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><path d="M14 14h3v3M17 20h3M20 17v3"/></svg>
+        Generate QR Code
+      </button>
+    </div>
+  </div>
+
+  <!-- OUTPUT -->
+  <div class="output-card">
+    <div class="output-top">
+      <span class="card-title">Output</span>
+      <div class="live-dot" id="live-dot"></div>
+    </div>
+
+    <div class="qr-stage">
+      <div class="qr-empty" id="qr-empty">
+        <svg width="52" height="52" viewBox="0 0 56 56" fill="none">
+          <rect x="4" y="4" width="20" height="20" rx="2.5" stroke="#c8c0b4" stroke-width="2"/>
+          <rect x="9" y="9" width="10" height="10" rx="1" fill="#c8c0b4"/>
+          <rect x="32" y="4" width="20" height="20" rx="2.5" stroke="#c8c0b4" stroke-width="2"/>
+          <rect x="37" y="9" width="10" height="10" rx="1" fill="#c8c0b4"/>
+          <rect x="4" y="32" width="20" height="20" rx="2.5" stroke="#c8c0b4" stroke-width="2"/>
+          <rect x="9" y="37" width="10" height="10" rx="1" fill="#c8c0b4"/>
+          <rect x="32" y="32" width="5" height="5" rx="1" fill="#c8c0b4"/>
+          <rect x="40" y="32" width="5" height="5" rx="1" fill="#c8c0b4"/>
+          <rect x="48" y="32" width="4" height="5" rx="1" fill="#c8c0b4"/>
+          <rect x="32" y="40" width="5" height="5" rx="1" fill="#c8c0b4"/>
+          <rect x="40" y="40" width="12" height="5" rx="1" fill="#c8c0b4"/>
+          <rect x="32" y="48" width="20" height="4" rx="1" fill="#c8c0b4"/>
+        </svg>
+        <p>configure &amp; generate</p>
+      </div>
+      <div id="qr-out"></div>
+    </div>
+
+    <div class="content-preview" id="content-preview">
+      <div class="preview-lbl">Encoded content</div>
+      <div class="preview-txt" id="preview-txt"></div>
+    </div>
+
+    <div class="stats-row" id="stats-row" style="display:none">
+      <div class="stat"><div class="stat-n" id="s-size">—</div><div class="stat-l">Size</div></div>
+      <div class="stat"><div class="stat-n" id="s-chars">—</div><div class="stat-l">Chars</div></div>
+      <div class="stat"><div class="stat-n" id="s-ec">M</div><div class="stat-l">EC Level</div></div>
+    </div>
+
+    <div class="actions">
+      <button class="act-btn primary" id="btn-dl" disabled onclick="dlQR()">↓ Download PNG</button>
+      <button class="act-btn" id="btn-cp" disabled onclick="cpQR()">⎘ Copy Image</button>
+    </div>
+  </div>
+
+</main>
+
+<footer>
+  <span>QR Generator · client-side only</span>
+  <span>no data sent to any server</span>
+</footer>
+
+<div class="toast" id="toast"></div>
+
+<script>
+  let ec = 'M', curType = 'url';
+
+  const types = {
+    url:   { lbl:'URL', hint:'include https://', ph:'https://example.com', rows:2 },
+    text:  { lbl:'Text', hint:'plain text or message', ph:'Your message here...', rows:4 },
+    email: { lbl:'Email Address', hint:'opens mail app on scan', ph:'name@example.com', rows:1 },
+    phone: { lbl:'Phone Number', hint:'with country code', ph:'+1 555 000 0000', rows:1 },
+  };
+
+  function setType(type, btn) {
+    curType = type;
+    document.querySelectorAll('.type-tab').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    const area = document.getElementById('input-area');
+    if (type === 'wifi') {
+      area.innerHTML = `
+        <div class="field"><div class="fl"><span>Network Name (SSID)</span></div>
+          <textarea id="wifi-ssid" rows="1" placeholder="MyNetwork"></textarea></div>
+        <div class="field"><div class="fl"><span>Password</span></div>
+          <textarea id="wifi-pass" rows="1" placeholder="password123"></textarea></div>
+        <div class="field"><div class="fl"><span>Security</span></div>
+          <select id="wifi-sec"><option value="WPA">WPA / WPA2</option><option value="WEP">WEP</option><option value="nopass">None</option></select></div>`;
+    } else {
+      const t = types[type];
+      area.innerHTML = `<div class="field"><div class="fl"><span>${t.lbl}</span><span class="fh">${t.hint}</span></div>
+        <textarea id="main-input" rows="${t.rows}" placeholder="${t.ph}"></textarea></div>`;
+    }
+  }
+
+  function getContent() {
+    if (curType === 'wifi') {
+      const s = document.getElementById('wifi-ssid')?.value.trim()||'';
+      const p = document.getElementById('wifi-pass')?.value.trim()||'';
+      const sec = document.getElementById('wifi-sec')?.value||'WPA';
+      return `WIFI:T:${sec};S:${s};P:${p};;`;
+    }
+    const raw = document.getElementById('main-input')?.value.trim()||'';
+    if (!raw) return '';
+    if (curType === 'email') return `mailto:${raw}`;
+    if (curType === 'phone') return `tel:${raw}`;
+    return raw;
+  }
+
+  function onSize(el) {
+    const v = parseInt(el.value);
+    el.style.setProperty('--pct', ((v-128)/(512-128)*100)+'%');
+    document.getElementById('size-val').textContent = v;
+    document.getElementById('size-hint').textContent = `${v} × ${v} px`;
+  }
+  onSize(document.getElementById('size-sl'));
+
+  function setColor(type, val) {
+    document.getElementById('sw-'+type).style.background = val;
+    document.getElementById('cv-'+type).textContent = val.toUpperCase();
+  }
+
+  function pal(dark, light) {
+    document.getElementById('pk-dark').value = dark;
+    document.getElementById('pk-light').value = light;
+    setColor('dark', dark); setColor('light', light);
+  }
+
+  function setEC(level, btn) {
+    ec = level;
+    document.querySelectorAll('.ec-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    document.getElementById('s-ec').textContent = level;
+  }
+
+  function generate() {
+    const content = getContent();
+    if (!content) { toast('Enter some content first'); return; }
+    const size = parseInt(document.getElementById('size-sl').value);
+    const dark = document.getElementById('pk-dark').value;
+    const light = document.getElementById('pk-light').value;
+    const ecMap = { L:QRCode.CorrectLevel.L, M:QRCode.CorrectLevel.M, Q:QRCode.CorrectLevel.Q, H:QRCode.CorrectLevel.H };
+
+    const out = document.getElementById('qr-out');
+    out.innerHTML = '';
+    new QRCode(out, { text:content, width:size, height:size, colorDark:dark, colorLight:light, correctLevel:ecMap[ec] });
+
+    document.getElementById('qr-empty').style.display = 'none';
+    out.style.display = 'block';
+    document.getElementById('live-dot').classList.add('on');
+
+    document.getElementById('preview-txt').textContent = content;
+    document.getElementById('content-preview').style.display = 'block';
+
+    document.getElementById('s-size').textContent = size+'px';
+    document.getElementById('s-chars').textContent = content.length;
+    document.getElementById('s-ec').textContent = ec;
+    document.getElementById('stats-row').style.display = 'grid';
+    document.getElementById('btn-dl').disabled = false;
+    document.getElementById('btn-cp').disabled = false;
+    toast('QR code ready ✓');
+  }
+
+  function getCanvas() { return document.querySelector('#qr-out canvas'); }
+
+  function dlQR() {
+    const c = getCanvas(); if (!c) return;
+    const a = document.createElement('a');
+    a.download = 'qrcode.png'; a.href = c.toDataURL('image/png'); a.click();
+    toast('Downloaded ✓');
+  }
+
+  async function cpQR() {
+    const c = getCanvas(); if (!c) return;
+    try {
+      c.toBlob(async b => {
+        await navigator.clipboard.write([new ClipboardItem({'image/png':b})]);
+        toast('Copied to clipboard ✓');
+      });
+    } catch { toast('Copy not supported in this browser'); }
+  }
+
+  function toast(msg) {
+    const t = document.getElementById('toast');
+    t.textContent = msg; t.classList.add('show');
+    setTimeout(() => t.classList.remove('show'), 2500);
+  }
+
+  document.addEventListener('keydown', e => { if ((e.ctrlKey||e.metaKey) && e.key==='Enter') generate(); });
+</script>
+</body>
+</html>
